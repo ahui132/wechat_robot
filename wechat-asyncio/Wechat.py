@@ -65,10 +65,26 @@ class Wechat():
             '_': int(time.time()),
         }
 
-        su = await self.__wxclient.downloadfile(url, data=payload, filename='qrimage.jpg')
-        logger.info ('请扫描二维码')
+        logger.debug("start download qrcode")
+        #su = await self.__wxclient.downloadfile(url, data=payload, filename='qrimage.jpg')
+        logger.debug("start qrcode")
+        t=threading.Thread(target=self.show_qrcode, args=('qrimage.jpg',))
+        logger.debug("show qrcode")
+        t.setDaemon(False)
+        logger.debug("show qrcode1")
+        t.start()
+        logger.debug("show qrcode2")
+
+        logger.info('请扫描二维码')
         print ('请扫描二维码')
         return su
+    def show_qrcode(self, path):
+        logger.debug("excuting show_qrcode")
+        from PIL import ImageTk, Image
+        logger.debug("open qrcode")
+        logger.debug(path)
+        img = Image.open(path)
+        img.show()
 
     async def __waitforlogin(self):
         logger.debug('Waiting for login.......')
