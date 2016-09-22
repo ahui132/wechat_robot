@@ -17,7 +17,8 @@ class HttpClient:
 
     async def get(self, url, params=None):
         try:
-            self.__cookies = self.__client.cookies
+            if hasattr(self.__client, 'cookies'):
+                self.__cookies = self.__client.cookies
             async with await self.__client.get(url, params=params) as r:
                 #assert r.status == 200
                 return await r.text()
@@ -28,7 +29,8 @@ class HttpClient:
 
     async def get_json(self, url, params=None):
         try:
-            self.__cookies = self.__client.cookies
+            if hasattr(self.__client, 'cookies'):
+                self.__cookies = self.__client.cookies
             async with await self.__client.get(url, params=params) as r:
                 text = await r.text(encoding='utf-8')
                 return json.loads(text)
@@ -39,7 +41,8 @@ class HttpClient:
 
     async def get_json_timeout(self, url, params=None):
         try:
-            self.__cookies = self.__client.cookies
+            if hasattr(self.__client, 'cookies'):
+                self.__cookies = self.__client.cookies
             with aiohttp.Timeout(2):
                 async with await self.__client.get(url, params=params) as r:
                     text = await r.text(encoding='utf-8')

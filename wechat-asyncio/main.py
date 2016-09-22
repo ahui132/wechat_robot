@@ -26,4 +26,4 @@ with aiohttp.ClientSession() as client, aiohttp.ClientSession() as rclient:
             msg.msgloop() ,
             god.monitor()
             ]
-    asyncio.get_event_loop().run_until_complete(asyncio.wait(tasks))
+    done, pending = asyncio.get_event_loop().run_until_complete(asyncio.gather(*tasks))

@@ -14,7 +14,7 @@ class RobotEngine():
         self.lasttext = ''
         self.lastuser = ''
 
-    async def answser(self, msginfo):
+    async def answer(self, msginfo):
         content = msginfo['Content']
         # 去掉英文，因为图灵机器人不支持
         content = re.sub(r'[a-zA-Z]', '', content)

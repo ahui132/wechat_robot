@@ -54,6 +54,7 @@ class MsgHandler:
             msginfo['Content'] = content
             msginfo['fromsomeone'] = fromsomeone_NickName
             msginfo['FromUserName'] = msg['FromUserName']
+            msginfo['MsgType'] = msg['MsgType']
 
             return msginfo
         else:
@@ -64,12 +65,33 @@ class MsgHandler:
             msginfo = await self.__parsemsg()
             if msginfo != None:
                 response = {}
-                answser = await self.robot.answser(msginfo)
-                response['Content'] = msginfo['fromsomeone'] + answser
-                response['user'] = msginfo['FromUserName']
-                await self.wx.sendqueue.put(response)
-
-                logger.info(msginfo['fromsomeone'] + ' say: ' + msginfo['Content'])
-                logger.info('Harry Potter say: ' + response['Content'])
+                answer= await self.deal_hj_msg(msginfo)
+                if answer:
+                    response['Content'] = msginfo['fromsomeone'] + answer
+                    response['user'] = msginfo['FromUserName']
+                    response['MsgType'] = 1
+                    await self.wx.sendqueue.put(response)
+                    logger.info(msginfo['fromsomeone'] + ' say: ' + msginfo['Content'])
+                    logger.info('Harry Potter say: ' + response['Content'])
 
             await asyncio.sleep(config.msgloop_interval)
+    async def deal_hj_msg(self, msginfo):
+        msg = msginfo['Content']
+        answer = '不想理你';
+        match = re.search(r'\b(?P<sn>_LC_\w+)',msginfo['Content'])
+        if match:
+            try:
+                sn = match.group('sn')
+                logger.debug(sn)
+                response = await self.wx.webwxuploadmedia('a.png')
+                logger.debug(response)
+                media_id = ""
+                if response is not None:
+                    media_id = response['MediaId']
+                    self.wx.webwxsendmsgimg(msginfo['FromUserName'], media_id)
+                #answer = await self.robot.answer(msginfo)
+                logger.debug(msginfo)
+            except Exception as e:
+                logger.exception('oop!-------------')
+            return None
+        return answer
