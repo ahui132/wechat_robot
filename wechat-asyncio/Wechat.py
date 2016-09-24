@@ -425,6 +425,7 @@ class Wechat():
 
     async def webwxuploadmedia(self, image_name):
         url = 'https://file2.wx.qq.com/cgi-bin/mmwebwx-bin/webwxuploadmedia?f=json'
+        url = 'https://file.wx2.qq.com/cgi-bin/mmwebwx-bin/webwxuploadmedia?f=json'
         # 计数器
         self.media_count = self.media_count + 1
         # 文件名
@@ -465,43 +466,41 @@ class Wechat():
             "StartPos": 0,
             "DataLen": file_size,
             "MediaType": 4
-        }).encode('utf8')
-
-        data={
-            'id': 'WU_FILE_' + str(self.media_count),
-            'type': mime_type,
-            'lastModifieDate': lastModifieDate,
-            'size': str(file_size),
-            'mediatype': media_type,
-            'uploadmediarequest': uploadmediarequest,
-            'webwx_data_ticket': webwx_data_ticket,
-            'pass_ticket': 'undefined', #pass_ticket,
-            file_name: open(file_name, 'rb'),
-        }
-        logger.debug(data)
+        }, ensure_ascii=False).encode('utf8')
+        multipart_encoder = MultipartEncoder(
+            fields={
+                'id': 'WU_FILE_' + str(self.media_count),
+                'name': file_name,
+                'type': mime_type,
+                'lastModifieDate': lastModifieDate,
+                'size': str(file_size),
+                'mediatype': media_type,
+                'uploadmediarequest': uploadmediarequest,
+                'webwx_data_ticket': webwx_data_ticket,
+                'pass_ticket': pass_ticket,
+                'filename': (file_name, open(file_name, 'rb'), mime_type.split('/')[1])
+            },
+            boundary='-----------------------------1575017231431605357584454111'
+        )
 
         headers = {
-            'Host': 'file2.wx.qq.com',
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:42.0) Gecko/20100101 Firefox/42.0',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate',
             'Referer': 'https://wx2.qq.com/',
-            'Origin': 'https://wx2.qq.com',
+            #'Host': 'file2.wx.qq.com',
             'Connection': 'keep-alive',
-            'Pragma': 'no-cache',
-            'Cache-Control': 'no-cache'
+            'Content-Length': str(file_size),
+            'Origin': 'https://wx2.qq.com',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:42.0) Gecko/20100101 Firefox/42.0',
+            'Accept':'*/*',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.6,en;q=0.4',
+            'Content-Type': multipart_encoder.content_type,
         }
 
-        async with self.__client.options(url, headers=headers) as r1:
-            response_json1 = await r1.json()
-            logger.debug(response_json1)
-            if response_json1['BaseResponse']['Ret'] == 1:
-                async with self.__client.post(url, data=data, proxy="http://127.0.0.1:8888", headers=headers) as r:
-                    response_json = await r.json()
-                    logger.debug(response_json)
-                    if response_json['BaseResponse']['Ret'] == 0:
-                        return response_json
+        r = requests.post(url, data=multipart_encoder, headers=headers)
+        response_json = r.json()
+        logger.debug(response_json)
+        if response_json['BaseResponse']['Ret'] == 0:
+            return response_json
         return None
 
     def webwxsendmsgimg(self, user_id, media_id):
@@ -513,7 +512,7 @@ class Wechat():
             "Msg": {
                 "Type": 3,
                 "MediaId": media_id,
-                "FromUserName": self.User['UserName'],
+                "FromUserName": self.My['UserName'],
                 "ToUserName": user_id,
                 "LocalID": clientMsgId,
                 "ClientMsgId": clientMsgId

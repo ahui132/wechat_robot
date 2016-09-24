@@ -19,7 +19,7 @@ class HttpClient:
         try:
             if hasattr(self.__client, 'cookies'):
                 self.__cookies = self.__client.cookies
-            async with await self.__client.get(url, params=params) as r:
+            async with await self.__client.get(url, params=params) as r: #proxy="http://127.0.0.1:8888"
                 #assert r.status == 200
                 return await r.text()
 
