@@ -99,6 +99,7 @@ class Wechat():
         logger.debug('Waiting for login.......')
         url = 'https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login?tip=%s&uuid=%s&_=%s' % (self.tip, self.uuid, int(time.time()))
         text = await self.__wxclient.get(url)
+        await asyncio.sleep(0.5)
 
         regx = r'window.code=(\d+);'
         pm = re.search(regx, text)
@@ -207,6 +208,7 @@ class Wechat():
             self.pass_ticket, self.skey, int(time.time()))
 
         dic = await self.__wxclient.get_json(url)
+        logger.debug(dic);
 
         SpecialUsers = ["newsapp", "fmessage", "filehelper", "weibo", "qqmail", "tmessage", "qmessage", "qqsync", "floatbottle", "lbsapp", "shakeapp", "medianote", "qqfriend", "readerapp", "blogapp", "facebookapp", "masssendapp",
                     "meishiapp", "feedsapp", "voip", "blogappweixin", "weixin", "brandsessionholder", "weixinreminder", "wxid_novlwrv3lqwv11", "gh_22b87fa7cb3c", "officialaccounts", "notification_messages", "wxitil", "userexperience_alarm"]
@@ -224,6 +226,7 @@ class Wechat():
             }
 
         self.memberlist = MemberList
+        logger.debug(MemberList);
         logger.info('You have %s friends.' % len(MemberList))
 
 
@@ -236,7 +239,7 @@ class Wechat():
         success = await self.__downloadQR()
         if not success:
             logger.info ('获取二维码失败')
-            print ('获取二维码失败')
+            print('获取二维码失败')
 
         while await self.__waitforlogin() != '200':
             pass
@@ -355,12 +358,14 @@ class Wechat():
         }
 
         dic = await self.__wxclient.post_json(url, params=params, data=json.dumps(payload))
+        logger.debug({'grouplist': dic, 'groupname':groupname})
         if dic == None:
             return
         GroupMapUsers = {}
         ContactList = dic['ContactList']
         for contact in ContactList:
             memberlist = contact['MemberList']
+            GroupMapUsers['NickName'] = contact['NickName']
             for member in memberlist:
                 # 默认 @群名片，没有群名片就 @昵称
                 nickname = member['NickName']
@@ -375,6 +380,7 @@ class Wechat():
                 GroupMapUsers[member['UserName']] = AT
 
         self.grouplist[groupname] = GroupMapUsers
+        logger.debug(self.grouplist)
 
     async def sync(self):
         await self.__login()

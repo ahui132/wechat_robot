@@ -5,6 +5,7 @@ import re
 
 import config
 import logging
+import Qos
 logger = logging.getLogger('monitor')
 
 class MsgHandler:
@@ -40,6 +41,9 @@ class MsgHandler:
                     fromsomeone_NickName = '@' + fromsomeone_NickName + ' '
                 else:
                     await self.wx.updatequeue.put(groupname)
+                if groupname in self.wx.grouplist:
+                     msginfo['group_NickName'] = self.wx.grouplist[groupname]['NickName']
+
                 # 去掉消息头部的来源信息
                 content = content[content.find('>')+1:]
             # 普通消息
@@ -76,22 +80,26 @@ class MsgHandler:
 
             await asyncio.sleep(config.msgloop_interval)
     async def deal_hj_msg(self, msginfo):
-        msg = msginfo['Content']
-        answer = '不想理你';
-        match = re.search(r'\b(?P<sn>_LC_\w+)',msginfo['Content'])
-        if match:
-            try:
-                sn = match.group('sn')
-                logger.debug(sn)
-                response = await self.wx.webwxuploadmedia('a.png')
-                logger.debug(response)
-                media_id = ""
-                if response is not None:
-                    media_id = response['MediaId']
-                    self.wx.webwxsendmsgimg(msginfo['FromUserName'], media_id)
-                #answer = await self.robot.answer(msginfo)
-                logger.debug(msginfo)
-            except Exception as e:
-                logger.exception('oop!-------------')
-            return None
-        return answer
+        logger.debug(msginfo)
+        if 'group_NickName' in msginfo and re.search(r'直播', msginfo['group_NickName']):
+            msg = msginfo['Content']
+            answer = '不想理你';
+            match = re.search(r'\b(?P<sn>_LC_\w+)',msginfo['Content'])
+            if match:
+                try:
+                    sn = match.group('sn')
+                    logger.debug(sn)
+                    sn='_LC_ps2_non_2377923914715906161770121_OX'
+                    Qos.getLiveInfo(sn, 'fps')
+                    response = await self.wx.webwxuploadmedia('tmp.png')
+                    logger.debug(response)
+                    media_id = ""
+                    if response is not None:
+                        media_id = response['MediaId']
+                        self.wx.webwxsendmsgimg(msginfo['FromUserName'], media_id)
+                    logger.debug(msginfo)
+                except Exception as e:
+                    logger.exception('oop!-------------')
+                return None
+            #answer = await self.robot.answer(msginfo)
+            return answer
