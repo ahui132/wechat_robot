@@ -1,11 +1,11 @@
 # coding=utf-8
 
 import asyncio
+import requests
 import re
 
 import config
 import logging
-import Qos
 logger = logging.getLogger('monitor')
 
 class MsgHandler:
@@ -41,6 +41,7 @@ class MsgHandler:
                     fromsomeone_NickName = '@' + fromsomeone_NickName + ' '
                 else:
                     await self.wx.updatequeue.put(groupname)
+                await asyncio.sleep(0.5)
                 if groupname in self.wx.grouplist:
                      msginfo['group_NickName'] = self.wx.grouplist[groupname]['NickName']
 
@@ -69,7 +70,7 @@ class MsgHandler:
             msginfo = await self.__parsemsg()
             if msginfo != None:
                 response = {}
-                answer= await self.deal_hj_msg(msginfo)
+                answer= await self.deal_pic_msg(msginfo)
                 if answer:
                     response['Content'] = msginfo['fromsomeone'] + answer
                     response['user'] = msginfo['FromUserName']
@@ -79,25 +80,29 @@ class MsgHandler:
                     logger.info('Harry Potter say: ' + response['Content'])
 
             await asyncio.sleep(config.msgloop_interval)
-    async def deal_hj_msg(self, msginfo):
+
+    async def deal_pic_msg(self, msginfo):
+        import pathlib
+        if not pathlib.Path('tmp.png').exists():
+            return
         logger.debug(msginfo)
-        if 'group_NickName' in msginfo and re.search(r'直播', msginfo['group_NickName']):
-            msg = msginfo['Content']
-            answer = '不想理你';
-            match = re.search(r'\b(?P<sn>_LC_\w+)',msginfo['Content'])
+        msg = msginfo['Content']
+        if 'group_NickName' in msginfo and re.search(r'直播', msginfo['group_NickName']) and '@query' in msg:
+            match = re.search(r'\s*\b(?P<sn>_LC_\w+|\d{8})',msginfo['Content'])
             if match:
                 try:
                     sn = match.group('sn')
+                    if not sn :
+                        return None
                     logger.debug(sn)
-                    sn='_LC_ps2_non_2377923914715906161770121_OX'
-                    Qos.getLiveInfo(sn, 'fps')
                     response = await self.wx.webwxuploadmedia('tmp.png')
                     logger.debug(response)
                     media_id = ""
                     if response is not None:
                         media_id = response['MediaId']
                         self.wx.webwxsendmsgimg(msginfo['FromUserName'], media_id)
-                    logger.debug(msginfo)
+                        await asyncio.sleep(1)
+
                 except Exception as e:
                     logger.exception('oop!-------------')
                 return None

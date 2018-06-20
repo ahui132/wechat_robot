@@ -19,7 +19,7 @@ class HttpClient:
         try:
             if hasattr(self.__client, 'cookies'):
                 self.__cookies = self.__client.cookies
-            async with await self.__client.get(url, params=params) as r: #proxy="http://127.0.0.1:8888"
+            async with await self.__client.get(url, params=params, proxy="http://127.0.0.1:8888") as r: #proxy="http://127.0.0.1:8888"
                 #assert r.status == 200
                 return await r.text()
 
@@ -31,7 +31,7 @@ class HttpClient:
         try:
             if hasattr(self.__client, 'cookies'):
                 self.__cookies = self.__client.cookies
-            async with await self.__client.get(url, params=params) as r:
+            async with await self.__client.get(url, params=params, proxy="http://127.0.0.1:8888") as r:
                 text = await r.text(encoding='utf-8')
                 return json.loads(text)
 
@@ -44,7 +44,7 @@ class HttpClient:
             if hasattr(self.__client, 'cookies'):
                 self.__cookies = self.__client.cookies
             with aiohttp.Timeout(2):
-                async with await self.__client.get(url, params=params) as r:
+                async with await self.__client.get(url, params=params, proxy="http://127.0.0.1:8888") as r:
                     text = await r.text(encoding='utf-8')
                     return json.loads(text)
 
@@ -54,7 +54,8 @@ class HttpClient:
 
     async def post(self, url, data, params=None):
         try:
-            async with await self.__client.post(url, params=params, data=data) as r:
+            logger.debug([url, data, params])
+            async with await self.__client.post(url, params=params, data=data, proxy="http://127.0.0.1:8888") as r:
                 #assert r.status == 200
                 return await r.text()
 
@@ -89,8 +90,15 @@ class HttpClient:
 
     async def downloadfile(self, url, data, filename):
         try:
+            logger.debug([self.__client.cookie_jar.__dict__['_cookies'], data, url])
             async with await self.__client.post(url, data=data) as r:
-                #assert r.status == 200
+                logger.debug(url)
+                logger.debug(data)
+                logger.debug(r)
+                logger.debug(r.__dict__)
+                logger.debug(r.content)
+                logger.debug(r.content.read(512))
+                assert r.status == 200
                 with open(filename, 'wb') as fd:
                     while True:
                         chunk = await r.content.read(512)

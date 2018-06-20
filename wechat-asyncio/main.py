@@ -14,7 +14,7 @@ import logging.config
 
 logging.config.fileConfig("logger.conf")
 
-with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False)) as client, aiohttp.ClientSession() as rclient:
+with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False)) as client, aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False)) as rclient:
     wx = Wechat(client)
     robot = RobotEngine(rclient, auth.apikey)
     msg = MsgHandler(wx, robot)

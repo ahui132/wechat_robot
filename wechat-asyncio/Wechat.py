@@ -156,6 +156,8 @@ class Wechat():
                 wxuin = node.childNodes[0].data
             elif node.nodeName == 'pass_ticket':
                 pass_ticket = node.childNodes[0].data
+            else:
+                return False;
 
         if not all((skey, wxsid, wxuin, pass_ticket)):
             return False
@@ -208,7 +210,6 @@ class Wechat():
             self.pass_ticket, self.skey, int(time.time()))
 
         dic = await self.__wxclient.get_json(url)
-        logger.debug(dic);
 
         SpecialUsers = ["newsapp", "fmessage", "filehelper", "weibo", "qqmail", "tmessage", "qmessage", "qqsync", "floatbottle", "lbsapp", "shakeapp", "medianote", "qqfriend", "readerapp", "blogapp", "facebookapp", "masssendapp",
                     "meishiapp", "feedsapp", "voip", "blogappweixin", "weixin", "brandsessionholder", "weixinreminder", "wxid_novlwrv3lqwv11", "gh_22b87fa7cb3c", "officialaccounts", "notification_messages", "wxitil", "userexperience_alarm"]
